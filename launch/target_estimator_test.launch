@@ -1,0 +1,131 @@
+<launch>
+  <!-- AprilTag camera input -->
+  <arg name="launch_prefix" default=""/>
+  <arg name="apriltag_node_name" default="apriltag_ros_continuous_node"/>
+  <arg name="node_output" default="screen"/>
+  <arg name="camera_name" default="/uav_1/usb_cam"/>
+  <arg name="image_topic" default="image_raw"/>
+  <arg name="camera_info_topic" default="camera_info"/>
+  <arg name="image_transport" default="raw"/>
+  <arg name="publish_tag_detections_image" default="true"/>
+
+  <!-- AprilTag detector settings -->
+  <arg name="tag_family" default="tag36h11"/>
+  <arg name="tag_threads" default="2"/>
+  <arg name="tag_decimate" default="1.0"/>
+  <arg name="tag_blur" default="0.0"/>
+  <arg name="tag_refine_edges" default="1"/>
+  <arg name="tag_debug" default="0"/>
+  <arg name="max_hamming_dist" default="2"/>
+  <arg name="publish_tf" default="true"/>
+  <arg name="remove_duplicates" default="true"/>
+  <arg name="tag_id" default="3"/>
+  <arg name="tag_size" default="0.20"/>
+
+  <!-- Target estimator inputs -->
+  <arg name="tag_detection_topic" default="/tag_detections"/>
+  <arg name="vehicle_status_topic" default="/uav/vehicle/status"/>
+  <arg name="imu_topic" default="/mavros/imu/data"/>
+
+  <!-- Target estimator frames and camera extrinsic -->
+  <arg name="camera_frame" default="robot_camera_link"/>
+  <arg name="body_frame" default="base_link"/>
+  <arg name="level_frame" default="level_body"/>
+  <arg name="use_tf_extrinsic" default="false"/>
+  <!-- Initial manual extrinsic for ocean_simulation_gazebo iris_fusion + sensor/fpv_cam.
+       Confirm with /gazebo/get_link_state and override at launch time if runtime differs. -->
+  <arg name="camera_translation_x" default="-0.158979"/>
+  <arg name="camera_translation_y" default="-0.04405"/>
+  <arg name="camera_translation_z" default="0.045074"/>
+  <arg name="camera_roll" default="0.0"/>
+  <arg name="camera_pitch" default="1.57079632679"/>
+  <arg name="camera_yaw" default="0.0"/>
+
+  <!-- Target estimator timing and tracking -->
+  <arg name="runtime_check_rate" default="20.0"/>
+  <arg name="estimator_update_rate" default="30.0"/>
+  <arg name="log_report_rate" default="1.0"/>
+  <arg name="vehicle_status_timeout" default="2.0"/>
+  <arg name="tag_detection_timeout" default="0.5"/>
+  <arg name="imu_timeout" default="0.1"/>
+  <arg name="min_valid_distance" default="0.15"/>
+  <arg name="max_valid_distance" default="10.0"/>
+  <arg name="max_position_jump" default="1.0"/>
+  <arg name="alpha" default="0.45"/>
+  <arg name="beta" default="0.08"/>
+  <arg name="min_filter_dt" default="0.005"/>
+  <arg name="max_filter_dt" default="0.20"/>
+  <arg name="stable_frame_threshold" default="3"/>
+  <arg name="lost_frame_threshold" default="5"/>
+  <arg name="max_predict_time" default="0.30"/>
+  <arg name="track_retention_time" default="1.0"/>
+  <arg name="confidence_threshold" default="0.5"/>
+  <arg name="tau_lost" default="0.2"/>
+  <arg name="tau_detection" default="0.15"/>
+  <arg name="residual_scale" default="0.5"/>
+  <arg name="imu_stale_confidence_scale" default="0.35"/>
+
+  <node pkg="apriltag_ros"
+        type="apriltag_ros_continuous_node"
+        name="$(arg apriltag_node_name)"
+        clear_params="true"
+        output="$(arg node_output)"
+        launch-prefix="$(arg launch_prefix)">
+    <remap from="image_rect" to="$(arg camera_name)/$(arg image_topic)"/>
+    <remap from="camera_info" to="$(arg camera_name)/$(arg camera_info_topic)"/>
+
+    <param name="transport_hint" type="str" value="$(arg image_transport)"/>
+    <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)"/>
+    <param name="tag_family" type="str" value="$(arg tag_family)"/>
+    <param name="tag_threads" type="int" value="$(arg tag_threads)"/>
+    <param name="tag_decimate" type="double" value="$(arg tag_decimate)"/>
+    <param name="tag_blur" type="double" value="$(arg tag_blur)"/>
+    <param name="tag_refine_edges" type="int" value="$(arg tag_refine_edges)"/>
+    <param name="tag_debug" type="int" value="$(arg tag_debug)"/>
+    <param name="max_hamming_dist" type="int" value="$(arg max_hamming_dist)"/>
+    <param name="publish_tf" type="bool" value="$(arg publish_tf)"/>
+    <param name="remove_duplicates" type="bool" value="$(arg remove_duplicates)"/>
+    <rosparam param="standalone_tags" subst_value="true">
+      [{id: $(arg tag_id), size: $(arg tag_size)}]
+    </rosparam>
+    <rosparam param="tag_bundles">[]</rosparam>
+  </node>
+
+  <node pkg="lite_quad_uav" type="target_estimator_node" name="target_estimator" output="$(arg node_output)">
+    <param name="tag_detection_topic" value="$(arg tag_detection_topic)"/>
+    <param name="vehicle_status_topic" value="$(arg vehicle_status_topic)"/>
+    <param name="imu_topic" value="$(arg imu_topic)"/>
+    <param name="camera_frame" value="$(arg camera_frame)"/>
+    <param name="body_frame" value="$(arg body_frame)"/>
+    <param name="level_frame" value="$(arg level_frame)"/>
+    <param name="use_tf_extrinsic" value="$(arg use_tf_extrinsic)"/>
+    <param name="camera_translation_x" value="$(arg camera_translation_x)"/>
+    <param name="camera_translation_y" value="$(arg camera_translation_y)"/>
+    <param name="camera_translation_z" value="$(arg camera_translation_z)"/>
+    <param name="camera_roll" value="$(arg camera_roll)"/>
+    <param name="camera_pitch" value="$(arg camera_pitch)"/>
+    <param name="camera_yaw" value="$(arg camera_yaw)"/>
+    <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <param name="estimator_update_rate" value="$(arg estimator_update_rate)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="tag_detection_timeout" value="$(arg tag_detection_timeout)"/>
+    <param name="imu_timeout" value="$(arg imu_timeout)"/>
+    <param name="min_valid_distance" value="$(arg min_valid_distance)"/>
+    <param name="max_valid_distance" value="$(arg max_valid_distance)"/>
+    <param name="max_position_jump" value="$(arg max_position_jump)"/>
+    <param name="alpha" value="$(arg alpha)"/>
+    <param name="beta" value="$(arg beta)"/>
+    <param name="min_filter_dt" value="$(arg min_filter_dt)"/>
+    <param name="max_filter_dt" value="$(arg max_filter_dt)"/>
+    <param name="stable_frame_threshold" value="$(arg stable_frame_threshold)"/>
+    <param name="lost_frame_threshold" value="$(arg lost_frame_threshold)"/>
+    <param name="max_predict_time" value="$(arg max_predict_time)"/>
+    <param name="track_retention_time" value="$(arg track_retention_time)"/>
+    <param name="confidence_threshold" value="$(arg confidence_threshold)"/>
+    <param name="tau_lost" value="$(arg tau_lost)"/>
+    <param name="tau_detection" value="$(arg tau_detection)"/>
+    <param name="residual_scale" value="$(arg residual_scale)"/>
+    <param name="imu_stale_confidence_scale" value="$(arg imu_stale_confidence_scale)"/>
+  </node>
+</launch>

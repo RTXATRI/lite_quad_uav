@@ -1,0 +1,90 @@
+<launch>
+  <arg name="mavros_ns" default="/mavros"/>
+  <arg name="fcu_url" default="udp://:14540@127.0.0.1:14557"/>
+  <arg name="gcs_url" default=""/>
+  <arg name="start_mavros" default="true"/>
+
+  <arg name="node_output" default="log"/>
+  <arg name="start_logger" default="true"/>
+  <arg name="logger_output" default="screen"/>
+  <arg name="log_report_rate" default="1.0"/>
+  <arg name="logger_print_rate" default="1.0"/>
+  <arg name="logger_report_timeout" default="3.0"/>
+  <arg name="logger_show_aux" default="false"/>
+  <arg name="logger_show_inactive_tasks" default="false"/>
+  <arg name="logger_show_target_estimator" default="false"/>
+  <arg name="logger_max_message_len" default="48"/>
+  <arg name="logger_compact" default="false"/>
+  <arg name="logger_task_ids" default="[]"/>
+  <arg name="logger_aux_ids" default="[]"/>
+
+  <arg name="runtime_check_rate" default="20.0"/>
+  <arg name="task_manager_runtime_check_rate" default="20.0"/>
+  <arg name="vehicle_status_timeout" default="2.0"/>
+  <arg name="local_position_timeout" default="2.0"/>
+  <arg name="max_xy_speed" default="10.0"/>
+  <arg name="max_z_up_speed" default="1.0"/>
+  <arg name="max_z_down_speed" default="1.0"/>
+  <arg name="max_yaw_rate" default="1.0"/>
+
+  <include if="$(arg start_mavros)" file="$(find mavros)/launch/px4.launch">
+    <arg name="fcu_url" value="$(arg fcu_url)"/>
+    <arg name="gcs_url" value="$(arg gcs_url)"/>
+  </include>
+
+  <node pkg="lite_quad_uav" type="connect_manager_node" name="connect_manager" output="$(arg node_output)">
+    <rosparam file="$(find lite_quad_uav)/config/vehicle.yaml" command="load"/>
+    <param name="mavros_ns" value="$(arg mavros_ns)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="safety_supervisor_node" name="safety_supervisor" output="$(arg node_output)">
+    <rosparam file="$(find lite_quad_uav)/config/safety.yaml" command="load"/>
+    <param name="mavros_ns" value="$(arg mavros_ns)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="controller_node" name="controller_node" output="$(arg node_output)">
+    <rosparam file="$(find lite_quad_uav)/config/controller.yaml" command="load"/>
+    <param name="mavros_ns" value="$(arg mavros_ns)"/>
+    <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <param name="pid_position_controller/max_xy_speed" value="$(arg max_xy_speed)"/>
+    <param name="pid_position_controller/max_z_up_speed" value="$(arg max_z_up_speed)"/>
+    <param name="pid_position_controller/max_z_down_speed" value="$(arg max_z_down_speed)"/>
+    <param name="pid_position_controller/max_yaw_rate" value="$(arg max_yaw_rate)"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="velocity_manager_node" name="velocity_manager" output="$(arg node_output)">
+    <param name="publish_rate" value="50.0"/>
+    <param name="command_timeout" value="0.5"/>
+    <param name="max_xy_speed" value="$(arg max_xy_speed)"/>
+    <param name="max_z_up_speed" value="$(arg max_z_up_speed)"/>
+    <param name="max_z_down_speed" value="$(arg max_z_down_speed)"/>
+    <param name="max_yaw_rate" value="$(arg max_yaw_rate)"/>
+    <param name="mavros_ns" value="$(arg mavros_ns)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="task_manager_node" name="task_manager" output="$(arg node_output)">
+    <param name="runtime_check_rate" value="$(arg task_manager_runtime_check_rate)"/>
+    <param name="status_publish_rate" value="2.0"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+  </node>
+
+  <node if="$(arg start_logger)" pkg="lite_quad_uav" type="logger_node.py" name="logger" output="$(arg logger_output)">
+    <param name="print_rate" value="$(arg logger_print_rate)"/>
+    <param name="report_timeout" value="$(arg logger_report_timeout)"/>
+    <param name="show_aux" value="$(arg logger_show_aux)"/>
+    <param name="show_inactive_tasks" value="$(arg logger_show_inactive_tasks)"/>
+    <param name="show_target_estimator" value="$(arg logger_show_target_estimator)"/>
+    <param name="max_message_len" value="$(arg logger_max_message_len)"/>
+    <param name="compact" value="$(arg logger_compact)"/>
+    <rosparam param="task_ids" subst_value="true">$(arg logger_task_ids)</rosparam>
+    <rosparam param="aux_ids" subst_value="true">$(arg logger_aux_ids)</rosparam>
+  </node>
+</launch>

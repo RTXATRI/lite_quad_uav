@@ -1,0 +1,12 @@
+std_msgs/Header header
+string source_task
+string source_action
+string mode
+geometry_msgs/Point reference_position
+geometry_msgs/Vector3 reference_velocity_ff
+float64 reference_yaw
+float64 max_xy_speed
+float64 max_z_up_speed
+float64 max_z_down_speed
+float64 max_yaw_rate
+bool valid

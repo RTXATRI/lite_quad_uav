@@ -1,0 +1,235 @@
+<launch>
+  <!-- Video camera source -->
+  <!-- <arg name="video_path" default="$(find lite_quad_uav)/docs/text2.mp4"/> -->
+  <arg name="video_path" default="$(find lite_quad_uav)/docs/land_cam.mp4"/>
+  <arg name="camera_name" default="/uav_1/usb_cam"/>
+  <arg name="image_topic" default="image_raw"/>
+  <arg name="camera_info_topic" default="camera_info"/>
+  <arg name="camera_frame" default="robot_camera_link"/>
+  <arg name="exit_when_video_done" default="true"/>
+  <arg name="keep_small_video_native" default="true"/>
+  <arg name="progress_log_interval" default="1.0"/>
+  <arg name="output_path" default=""/>
+  <arg name="output_fourcc" default="auto"/>
+  <arg name="tag_detection_topic" default="/tag_detections"/>
+  <arg name="detection_timeout" default="2.0"/>
+  <arg name="sync_by_stamp" default="true"/>
+  <arg name="sync_tolerance" default="0.001"/>
+  <arg name="fallback_to_raw_on_timeout" default="true"/>
+  <arg name="wait_for_subscribers" default="true"/>
+  <arg name="subscriber_wait_timeout" default="10.0"/>
+  <arg name="draw_custom_overlay" default="true"/>
+
+  <arg name="overlay_line_thickness" default="4"/>
+  <arg name="overlay_font_scale" default="1.0"/>
+  <arg name="overlay_show_axes" default="true"/>
+  <arg name="overlay_axis_length_scale" default="0.5"/>
+  <arg name="overlay_status_text" default="true"/>
+  <arg name="overlay_timeout_text" default="true"/>
+  <arg name="fallback_tag_size" default="0.20"/>
+  <arg name="enable_camera_trajectory" default="true"/>
+  <arg name="draw_trajectory_overlay" default="true"/>
+  <arg name="publish_rviz_trajectory" default="true"/>
+  <arg name="rviz_trajectory_pose_topic" default="/uav/sensing/camera_trajectory/pose"/>
+  <arg name="rviz_trajectory_path_topic" default="/uav/sensing/camera_trajectory/path"/>
+  <arg name="rviz_trajectory_marker_topic" default="/uav/sensing/camera_trajectory/markers"/>
+  <arg name="rviz_path_max_points" default="5000"/>
+  <arg name="rviz_axis_length" default="0.15"/>
+  <arg name="start_rviz" default="false"/>
+  <arg name="rviz_config" default="$(find lite_quad_uav)/rviz/apriltag_video_test.rviz"/>
+  <arg name="camera_trajectory_csv_path" default=""/>
+  <arg name="board_frame" default="tag1_board"/>
+  <arg name="tag_1_board_xyz" default="0.0 0.0 0.0"/>
+  <arg name="tag_1_board_rpy" default="0.0 0.0 0.0"/>
+  <arg name="tag_2_board_xyz" default="0.0 0.15 -0.12"/>
+  <arg name="tag_2_board_rpy" default="0.0 0.0 0.0"/>
+  <arg name="tag_3_board_xyz" default="0.0 -0.15 -0.12"/>
+  <arg name="tag_3_board_rpy" default="0.0 0.0 3.14159265359"/>
+  <arg name="pose_outlier_distance" default="0.25"/>
+  <arg name="pose_outlier_angle" default="0.8"/>
+  <arg name="trajectory_alpha" default="0.45"/>
+  <arg name="trajectory_beta" default="0.08"/>
+  <arg name="trajectory_orientation_alpha" default="0.25"/>
+  <arg name="trajectory_max_filter_dt" default="0.20"/>
+  <arg name="trajectory_max_predict_time" default="0.50"/>
+  <arg name="trajectory_lost_frame_threshold" default="15"/>
+  <arg name="trajectory_stable_frame_threshold" default="3"/>
+  <arg name="trajectory_reset_distance" default="1.0"/>
+  <arg name="single_tag_confidence_scale" default="0.55"/>
+  <arg name="prediction_confidence_scale" default="0.35"/>
+  <arg name="filter_enabled" default="true"/>
+  <arg name="use_rts_smoother" default="true"/>
+  <arg name="use_interpolation" default="true"/>
+  <arg name="sigma_a_xy" default="1.0"/>
+  <arg name="sigma_a_z" default="0.8"/>
+  <arg name="sigma_yaw_acc" default="0.8"/>
+  <arg name="confidence_min" default="0.1"/>
+  <arg name="min_accept_confidence" default="0.2"/>
+  <arg name="R_base_position" default="0.03"/>
+  <arg name="R_base_yaw" default="0.05"/>
+  <arg name="mahalanobis_threshold" default="13.0"/>
+  <arg name="pending_confirm_count" default="3"/>
+  <arg name="short_lost_time" default="0.3"/>
+  <arg name="mid_lost_time" default="1.0"/>
+  <arg name="max_dt" default="0.5"/>
+  <arg name="max_position_jump" default="0.5"/>
+  <arg name="max_horizontal_speed" default="2.0"/>
+  <arg name="max_vertical_speed" default="1.5"/>
+  <arg name="max_yaw_jump_deg" default="20.0"/>
+  <arg name="max_reprojection_error" default="5.0"/>
+  <arg name="min_border_distance" default="10.0"/>
+
+  <!-- 4mm lens, 1/2.6 inch 16:9 sensor, 3840x2160 source scaled to 1920x1080, no distortion. -->
+  <arg name="image_width" default="1920"/>
+  <arg name="image_height" default="1080"/>
+  <arg name="fx" default="1431.89"/>
+  <arg name="fy" default="1431.89"/>
+  <arg name="cx" default="960.0"/>
+  <arg name="cy" default="540.0"/>
+
+  <!-- AprilTag detector settings -->
+  <arg name="apriltag_node_name" default="apriltag_ros_continuous_node"/>
+  <arg name="node_output" default="screen"/>
+  <arg name="launch_prefix" default=""/>
+  <arg name="image_transport" default="raw"/>
+  <arg name="publish_tag_detections_image" default="false"/>
+  <arg name="tag_family" default="tag36h11"/>
+  <arg name="tag_threads" default="2"/>
+  <arg name="tag_decimate" default="1.0"/>
+  <arg name="tag_blur" default="0.0"/>
+  <arg name="tag_refine_edges" default="1"/>
+  <arg name="tag_debug" default="0"/>
+  <arg name="max_hamming_dist" default="2"/>
+  <arg name="publish_tf" default="true"/>
+  <arg name="remove_duplicates" default="true"/>
+  <arg name="tag_1_id" default="1"/>
+  <arg name="tag_2_id" default="2"/>
+  <arg name="tag_3_id" default="3"/>
+  <arg name="tag_1_size" default="0.18"/>
+  <arg name="tag_2_size" default="0.045"/>
+  <arg name="tag_3_size" default="0.045"/>
+
+  <node pkg="lite_quad_uav"
+        type="video_camera_publisher.py"
+        name="video_camera_publisher"
+        output="$(arg node_output)"
+        required="$(arg exit_when_video_done)">
+    <param name="video_path" value="$(arg video_path)"/>
+    <param name="image_topic" value="$(arg camera_name)/$(arg image_topic)"/>
+    <param name="camera_info_topic" value="$(arg camera_name)/$(arg camera_info_topic)"/>
+    <param name="frame_id" value="$(arg camera_frame)"/>
+    <param name="keep_small_video_native" value="$(arg keep_small_video_native)"/>
+    <param name="progress_log_interval" value="$(arg progress_log_interval)"/>
+    <param name="output_path" value="$(arg output_path)"/>
+    <param name="fourcc" value="$(arg output_fourcc)"/>
+    <param name="tag_detection_topic" value="$(arg tag_detection_topic)"/>
+    <param name="detection_timeout" value="$(arg detection_timeout)"/>
+    <param name="sync_by_stamp" value="$(arg sync_by_stamp)"/>
+    <param name="sync_tolerance" value="$(arg sync_tolerance)"/>
+    <param name="fallback_to_raw_on_timeout" value="$(arg fallback_to_raw_on_timeout)"/>
+    <param name="wait_for_subscribers" value="$(arg wait_for_subscribers)"/>
+    <param name="subscriber_wait_timeout" value="$(arg subscriber_wait_timeout)"/>
+    <param name="draw_custom_overlay" value="$(arg draw_custom_overlay)"/>
+    <param name="overlay_line_thickness" value="$(arg overlay_line_thickness)"/>
+    <param name="overlay_font_scale" value="$(arg overlay_font_scale)"/>
+    <param name="overlay_show_axes" value="$(arg overlay_show_axes)"/>
+    <param name="overlay_axis_length_scale" value="$(arg overlay_axis_length_scale)"/>
+    <param name="overlay_status_text" value="$(arg overlay_status_text)"/>
+    <param name="overlay_timeout_text" value="$(arg overlay_timeout_text)"/>
+    <param name="fallback_tag_size" value="$(arg fallback_tag_size)"/>
+    <param name="enable_camera_trajectory" value="$(arg enable_camera_trajectory)"/>
+    <param name="draw_trajectory_overlay" value="$(arg draw_trajectory_overlay)"/>
+    <param name="publish_rviz_trajectory" value="$(arg publish_rviz_trajectory)"/>
+    <param name="rviz_trajectory_pose_topic" value="$(arg rviz_trajectory_pose_topic)"/>
+    <param name="rviz_trajectory_path_topic" value="$(arg rviz_trajectory_path_topic)"/>
+    <param name="rviz_trajectory_marker_topic" value="$(arg rviz_trajectory_marker_topic)"/>
+    <param name="rviz_path_max_points" value="$(arg rviz_path_max_points)"/>
+    <param name="rviz_axis_length" value="$(arg rviz_axis_length)"/>
+    <param name="camera_trajectory_csv_path" value="$(arg camera_trajectory_csv_path)"/>
+    <param name="board_frame" value="$(arg board_frame)"/>
+    <param name="tag_1_board_xyz" value="$(arg tag_1_board_xyz)"/>
+    <param name="tag_1_board_rpy" value="$(arg tag_1_board_rpy)"/>
+    <param name="tag_2_board_xyz" value="$(arg tag_2_board_xyz)"/>
+    <param name="tag_2_board_rpy" value="$(arg tag_2_board_rpy)"/>
+    <param name="tag_3_board_xyz" value="$(arg tag_3_board_xyz)"/>
+    <param name="tag_3_board_rpy" value="$(arg tag_3_board_rpy)"/>
+    <param name="pose_outlier_distance" value="$(arg pose_outlier_distance)"/>
+    <param name="pose_outlier_angle" value="$(arg pose_outlier_angle)"/>
+    <param name="trajectory_alpha" value="$(arg trajectory_alpha)"/>
+    <param name="trajectory_beta" value="$(arg trajectory_beta)"/>
+    <param name="trajectory_orientation_alpha" value="$(arg trajectory_orientation_alpha)"/>
+    <param name="trajectory_max_filter_dt" value="$(arg trajectory_max_filter_dt)"/>
+    <param name="trajectory_max_predict_time" value="$(arg trajectory_max_predict_time)"/>
+    <param name="trajectory_lost_frame_threshold" value="$(arg trajectory_lost_frame_threshold)"/>
+    <param name="trajectory_stable_frame_threshold" value="$(arg trajectory_stable_frame_threshold)"/>
+    <param name="trajectory_reset_distance" value="$(arg trajectory_reset_distance)"/>
+    <param name="single_tag_confidence_scale" value="$(arg single_tag_confidence_scale)"/>
+    <param name="prediction_confidence_scale" value="$(arg prediction_confidence_scale)"/>
+    <param name="filter_enabled" value="$(arg filter_enabled)"/>
+    <param name="use_rts_smoother" value="$(arg use_rts_smoother)"/>
+    <param name="use_interpolation" value="$(arg use_interpolation)"/>
+    <param name="sigma_a_xy" value="$(arg sigma_a_xy)"/>
+    <param name="sigma_a_z" value="$(arg sigma_a_z)"/>
+    <param name="sigma_yaw_acc" value="$(arg sigma_yaw_acc)"/>
+    <param name="confidence_min" value="$(arg confidence_min)"/>
+    <param name="min_accept_confidence" value="$(arg min_accept_confidence)"/>
+    <param name="R_base_position" value="$(arg R_base_position)"/>
+    <param name="R_base_yaw" value="$(arg R_base_yaw)"/>
+    <param name="mahalanobis_threshold" value="$(arg mahalanobis_threshold)"/>
+    <param name="pending_confirm_count" value="$(arg pending_confirm_count)"/>
+    <param name="short_lost_time" value="$(arg short_lost_time)"/>
+    <param name="mid_lost_time" value="$(arg mid_lost_time)"/>
+    <param name="max_dt" value="$(arg max_dt)"/>
+    <param name="max_position_jump" value="$(arg max_position_jump)"/>
+    <param name="max_horizontal_speed" value="$(arg max_horizontal_speed)"/>
+    <param name="max_vertical_speed" value="$(arg max_vertical_speed)"/>
+    <param name="max_yaw_jump_deg" value="$(arg max_yaw_jump_deg)"/>
+    <param name="max_reprojection_error" value="$(arg max_reprojection_error)"/>
+    <param name="min_border_distance" value="$(arg min_border_distance)"/>
+    <param name="width" value="$(arg image_width)"/>
+    <param name="height" value="$(arg image_height)"/>
+    <param name="fx" value="$(arg fx)"/>
+    <param name="fy" value="$(arg fy)"/>
+    <param name="cx" value="$(arg cx)"/>
+    <param name="cy" value="$(arg cy)"/>
+  </node>
+
+  <node pkg="apriltag_ros"
+        type="apriltag_ros_continuous_node"
+        name="$(arg apriltag_node_name)"
+        clear_params="true"
+        output="$(arg node_output)"
+        launch-prefix="$(arg launch_prefix)">
+    <remap from="image_rect" to="$(arg camera_name)/$(arg image_topic)"/>
+    <remap from="camera_info" to="$(arg camera_name)/$(arg camera_info_topic)"/>
+
+    <param name="transport_hint" type="str" value="$(arg image_transport)"/>
+    <param name="publish_tag_detections_image" type="bool" value="$(arg publish_tag_detections_image)"/>
+    <param name="tag_family" type="str" value="$(arg tag_family)"/>
+    <param name="tag_threads" type="int" value="$(arg tag_threads)"/>
+    <param name="tag_decimate" type="double" value="$(arg tag_decimate)"/>
+    <param name="tag_blur" type="double" value="$(arg tag_blur)"/>
+    <param name="tag_refine_edges" type="int" value="$(arg tag_refine_edges)"/>
+    <param name="tag_debug" type="int" value="$(arg tag_debug)"/>
+    <param name="max_hamming_dist" type="int" value="$(arg max_hamming_dist)"/>
+    <param name="publish_tf" type="bool" value="$(arg publish_tf)"/>
+    <param name="remove_duplicates" type="bool" value="$(arg remove_duplicates)"/>
+    <rosparam param="standalone_tags" subst_value="true">
+      [
+        {id: $(arg tag_1_id), size: $(arg tag_1_size)},
+        {id: $(arg tag_2_id), size: $(arg tag_2_size)},
+        {id: $(arg tag_3_id), size: $(arg tag_3_size)}
+      ]
+    </rosparam>
+    <rosparam param="tag_bundles">[]</rosparam>
+  </node>
+
+  <node if="$(arg start_rviz)"
+        pkg="rviz"
+        type="rviz"
+        name="apriltag_video_test_rviz"
+        args="-d $(arg rviz_config)"
+        output="screen">
+    <env name="DISABLE_ROS1_EOL_WARNINGS" value="1"/>
+  </node>
+</launch>

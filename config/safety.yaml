@@ -1,0 +1,3 @@
+position_timeout: 5.0
+battery_timeout: 5.0
+publish_rate: 2.0

@@ -1,0 +1,15 @@
+task_manager:
+  status_publish_rate: 2.0
+
+square_patrol_task:
+  square_side_length: 10.0
+  flight_altitude: 3.0
+  takeoff_height: 3.0
+  waypoint_accept_radius: 0.4
+  waypoint_hold_time: 0.0
+  max_xy_speed: 1.0
+  max_z_up_speed: 0.6
+  max_z_down_speed: 0.6
+  max_yaw_rate: 0.0
+  auto_start: true
+  update_rate: 20.0

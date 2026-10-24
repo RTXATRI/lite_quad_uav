@@ -1,0 +1,136 @@
+<launch>
+  <!-- Task parameters -->
+  <arg name="square_side_length" default="10.0"/>
+  <arg name="flight_altitude" default="3.0"/>
+  <arg name="takeoff_height" default="3.0"/>
+  <arg name="waypoint_accept_radius" default="0.4"/>
+  <arg name="waypoint_hold_time" default="0.0"/>
+  <arg name="max_xy_speed" default="10.0"/>
+  <arg name="max_z_up_speed" default="0.6"/>
+  <arg name="max_z_down_speed" default="0.6"/>
+  <arg name="max_yaw_rate" default="0.0"/>
+  <arg name="auto_start_task" default="false"/>
+  <arg name="task_update_rate" default="20.0"/>
+  <arg name="runtime_check_rate" default="20.0"/>
+  <arg name="local_position_timeout" default="2.0"/>
+  <arg name="vehicle_status_timeout" default="2.0"/>
+  <arg name="task_manager_runtime_check_rate" default="20.0"/>
+  <arg name="mode_confirm_timeout" default="10.0"/>
+  <arg name="arm_confirm_timeout" default="10.0"/>
+  <arg name="mavros_ns" default="/mavros"/>
+  <arg name="start_logger" default="true"/>
+  <arg name="start_mavros" default="false"/>
+  <arg name="node_output" default="log"/>
+  <arg name="logger_output" default="screen"/>
+  <arg name="log_report_rate" default="1.0"/>
+  <arg name="logger_print_rate" default="1.0"/>
+  <arg name="logger_report_timeout" default="3.0"/>
+  <arg name="logger_show_aux" default="false"/>
+  <arg name="logger_show_inactive_tasks" default="false"/>
+  <arg name="logger_max_message_len" default="48"/>
+  <arg name="logger_compact" default="false"/>
+
+  <!-- PX4 SITL parameters. Default flow: start PX4/MAVROS externally with px4 mavros_posix_sitl.launch. -->
+  <arg name="start_sim" default="false"/>
+  <arg name="px4_dir" default="$(optenv PX4_DIR /home/ubuntu/code/PX4-Autopilot)"/>
+  <arg name="vehicle" default="iris"/>
+  <arg name="world" default="$(arg px4_dir)/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/empty.world"/>
+  <arg name="sdf" default="$(arg px4_dir)/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+  <arg name="gui" default="true"/>
+  <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+  <arg name="interactive" default="true"/>
+
+  <!-- ========== Optional PX4 SITL + Gazebo + MAVROS ========== -->
+  <group if="$(arg start_sim)">
+    <arg unless="$(arg interactive)" name="px4_cmd_arg" value="-d"/>
+    <arg     if="$(arg interactive)" name="px4_cmd_arg" value=""/>
+    <env name="PX4_SIM_MODEL" value="gazebo-classic_$(arg vehicle)"/>
+    <node name="sitl" pkg="px4" type="px4" output="screen" args="$(arg px4_dir)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS $(arg px4_cmd_arg)" required="true"/>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="gui" value="$(arg gui)"/>
+      <arg name="world_name" value="$(arg world)"/>
+      <arg name="paused" value="false"/>
+    </include>
+
+    <node name="vehicle_spawn" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x 0 -y 0 -z 0"/>
+
+    <include file="$(find mavros)/launch/px4.launch">
+      <arg name="fcu_url" value="$(arg fcu_url)"/>
+      <arg name="gcs_url" value=""/>
+    </include>
+  </group>
+
+  <!-- ========== UAV control system ========== -->
+  <include file="$(find lite_quad_uav)/launch/uav_core_start.launch">
+    <arg name="mavros_ns" value="$(arg mavros_ns)"/>
+    <arg name="start_mavros" value="$(arg start_mavros)"/>
+    <arg name="start_logger" value="$(arg start_logger)"/>
+    <arg name="node_output" value="$(arg node_output)"/>
+    <arg name="logger_output" value="$(arg logger_output)"/>
+    <arg name="log_report_rate" value="$(arg log_report_rate)"/>
+    <arg name="logger_print_rate" value="$(arg logger_print_rate)"/>
+    <arg name="logger_report_timeout" value="$(arg logger_report_timeout)"/>
+    <arg name="logger_show_aux" value="$(arg logger_show_aux)"/>
+    <arg name="logger_show_inactive_tasks" value="$(arg logger_show_inactive_tasks)"/>
+    <arg name="logger_show_target_estimator" value="false"/>
+    <arg name="logger_max_message_len" value="$(arg logger_max_message_len)"/>
+    <arg name="logger_compact" value="$(arg logger_compact)"/>
+    <arg name="logger_task_ids" value="[square_patrol, hover_placeholder, inspection_placeholder]"/>
+    <arg name="logger_aux_ids" value="[]"/>
+    <arg name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <arg name="task_manager_runtime_check_rate" value="$(arg task_manager_runtime_check_rate)"/>
+    <arg name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <arg name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <arg name="max_xy_speed" value="$(arg max_xy_speed)"/>
+    <arg name="max_z_up_speed" value="$(arg max_z_up_speed)"/>
+    <arg name="max_z_down_speed" value="$(arg max_z_down_speed)"/>
+    <arg name="max_yaw_rate" value="$(arg max_yaw_rate)"/>
+  </include>
+
+  <node pkg="lite_quad_uav" type="square_patrol_task_node" name="square_patrol_task" output="$(arg node_output)">
+    <param name="mavros_ns" value="$(arg mavros_ns)"/>
+    <param name="square_side_length" value="$(arg square_side_length)"/>
+    <param name="flight_altitude" value="$(arg flight_altitude)"/>
+    <param name="takeoff_height" value="$(arg takeoff_height)"/>
+    <param name="waypoint_accept_radius" value="$(arg waypoint_accept_radius)"/>
+    <param name="waypoint_hold_time" value="$(arg waypoint_hold_time)"/>
+    <param name="max_xy_speed" value="$(arg max_xy_speed)"/>
+    <param name="max_z_up_speed" value="$(arg max_z_up_speed)"/>
+    <param name="max_z_down_speed" value="$(arg max_z_down_speed)"/>
+    <param name="max_yaw_rate" value="$(arg max_yaw_rate)"/>
+    <param name="auto_start" value="$(arg auto_start_task)"/>
+    <param name="update_rate" value="$(arg task_update_rate)"/>
+    <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="mode_confirm_timeout" value="$(arg mode_confirm_timeout)"/>
+    <param name="arm_confirm_timeout" value="$(arg arm_confirm_timeout)"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="hover_placeholder_task_node" name="hover_placeholder_task" output="$(arg node_output)">
+    <param name="task_id" value="hover_placeholder"/>
+    <param name="task_ns" value="/uav/tasks/hover_placeholder"/>
+    <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <param name="status_publish_rate" value="2.0"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <param name="finish_delay" value="0.0"/>
+    <param name="auto_start" value="false"/>
+  </node>
+
+  <node pkg="lite_quad_uav" type="inspection_placeholder_task_node" name="inspection_placeholder_task" output="$(arg node_output)">
+    <param name="task_id" value="inspection_placeholder"/>
+    <param name="task_ns" value="/uav/tasks/inspection_placeholder"/>
+    <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
+    <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
+    <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <param name="status_publish_rate" value="2.0"/>
+    <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <param name="finish_delay" value="0.0"/>
+    <param name="auto_start" value="false"/>
+  </node>
+
+</launch>

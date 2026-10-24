@@ -1,0 +1,46 @@
+update_rate: 50.0
+command_timeout: 0.3
+
+pid_position_controller:
+  kp_xy: 0.6
+  ki_xy: 0.0
+  kd_xy: 0.05
+
+  kp_z: 0.8
+  ki_z: 0.0
+  kd_z: 0.05
+
+  kp_yaw: 0.5
+  ki_yaw: 0.0
+  kd_yaw: 0.0
+
+  max_xy_speed: 1.0
+  max_z_up_speed: 0.6
+  max_z_down_speed: 0.6
+  max_yaw_rate: 0.5
+
+  integral_limit_xy: 0.5
+  integral_limit_z: 0.3
+  integral_limit_yaw: 0.2
+
+  deadband_xy: 0.02
+  deadband_z: 0.02
+  deadband_yaw: 0.01
+
+  dt_min: 0.001
+
+  converge_radius: 0.4
+
+tracking_mix:
+  rl_start_distance: 5.0
+  rl_full_distance: 1.0
+  rl_alpha_max: 0.3
+  min_target_confidence: 0.7
+
+landing_mix:
+  rl_alpha_max: 0.3
+  min_target_confidence: 0.8
+
+rl:
+  tracking_output_timeout: 0.15
+  landing_output_timeout: 0.15

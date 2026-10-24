@@ -1,0 +1,5 @@
+string task_id
+string command
+---
+bool accepted
+string message
