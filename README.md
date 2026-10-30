@@ -6,6 +6,11 @@ ROS1 Noetic + MAVROS + PX4 SITL 下的轻量四旋翼控制框架。当前包的
 PX4/MAVROS -> reliable connected -> setpoint stream ready -> 任务请求 OFFBOARD/ARM -> 生成位置参考 -> PID 生成候选速度 -> 速度管理层发布 MAVROS setpoint
 ```
 
+无人机模型、测试世界及仿真验证入口由 `ocean_simulation_gazebo` 维护。
+独立验证运行 `roslaunch ocean_simulation_gazebo uav_camera_test.launch`；码头场景运行
+`roslaunch ocean_simulation_gazebo simulation_dock_world.launch`。模型资源名为 `lite_quad_uav`，
+默认 Gazebo 实例和 ROS 前缀仍为 `uav_1`。使用说明位于仿真包的 `docs/uav_camera_model.md`。
+
 `connect_manager_node` 启动后只负责连接健康检查、setpoint stream 前置检查，以及通用车辆命令代理。任务启动由 `task_manager_node` 统一入口触发；矩形任务会在自身流程中请求 `SET_MODE OFFBOARD` 和 `ARM`。
 
 ## 节点作用

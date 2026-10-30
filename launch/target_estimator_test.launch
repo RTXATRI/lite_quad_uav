@@ -32,8 +32,9 @@
   <arg name="body_frame" default="base_link"/>
   <arg name="level_frame" default="level_body"/>
   <arg name="use_tf_extrinsic" default="false"/>
-  <!-- Initial manual extrinsic for ocean_simulation_gazebo iris_fusion + sensor/fpv_cam.
-       Confirm with /gazebo/get_link_state and override at launch time if runtime differs. -->
+  <!-- Legacy manual extrinsic defaults; the simulation model is now maintained in
+       ocean_simulation_gazebo/models/vehicle/lite_quad_uav. These values have not
+       been recalibrated; confirm Gazebo/ROS optical frame conventions before use. -->
   <arg name="camera_translation_x" default="-0.158979"/>
   <arg name="camera_translation_y" default="-0.04405"/>
   <arg name="camera_translation_z" default="0.045074"/>

@@ -1,6 +1,6 @@
 <launch>
   <!-- Video camera source -->
-  <!-- <arg name="video_path" default="$(find lite_quad_uav)/docs/text2.mp4"/> -->
+  <!-- <arg name="video_path" default="$(find lite_quad_uav)/docs/text.mp4"/> -->
   <arg name="video_path" default="$(find lite_quad_uav)/docs/land_cam.mp4"/>
   <arg name="camera_name" default="/uav_1/usb_cam"/>
   <arg name="image_topic" default="image_raw"/>

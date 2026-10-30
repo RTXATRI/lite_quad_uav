@@ -30,30 +30,40 @@
   <arg name="logger_max_message_len" default="48"/>
   <arg name="logger_compact" default="false"/>
 
-  <!-- PX4 SITL parameters. Default flow: start PX4/MAVROS externally with px4 mavros_posix_sitl.launch. -->
+  <!-- Default flow: start simulation externally with ocean_simulation_gazebo.
+       Empty legacy path arguments are resolved only when start_sim is enabled. -->
   <arg name="start_sim" default="false"/>
-  <arg name="px4_dir" default="$(optenv PX4_DIR /home/ubuntu/code/PX4-Autopilot)"/>
+  <arg name="px4_dir" default="$(optenv PX4_DIR)"/>
   <arg name="vehicle" default="iris"/>
-  <arg name="world" default="$(arg px4_dir)/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/empty.world"/>
-  <arg name="sdf" default="$(arg px4_dir)/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/$(arg vehicle)/$(arg vehicle).sdf"/>
+  <arg name="world" default=""/>
+  <arg name="sdf" default=""/>
   <arg name="gui" default="true"/>
   <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
   <arg name="interactive" default="true"/>
 
   <!-- ========== Optional PX4 SITL + Gazebo + MAVROS ========== -->
   <group if="$(arg start_sim)">
+    <arg name="sim_px4_dir" value="$(eval arg('px4_dir') or find('px4'))"/>
+    <arg name="sim_world" value="$(eval arg('world') or arg('sim_px4_dir') + '/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/empty.world')"/>
+    <arg name="sim_sdf" value="$(eval arg('sdf') or arg('sim_px4_dir') + '/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/' + arg('vehicle') + '/' + arg('vehicle') + '.sdf')"/>
     <arg unless="$(arg interactive)" name="px4_cmd_arg" value="-d"/>
     <arg     if="$(arg interactive)" name="px4_cmd_arg" value=""/>
     <env name="PX4_SIM_MODEL" value="gazebo-classic_$(arg vehicle)"/>
-    <node name="sitl" pkg="px4" type="px4" output="screen" args="$(arg px4_dir)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS $(arg px4_cmd_arg)" required="true"/>
+    <env name="GAZEBO_MODEL_PATH"
+         value="$(arg sim_px4_dir)/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models:$(optenv GAZEBO_MODEL_PATH)"/>
+    <env name="GAZEBO_PLUGIN_PATH"
+         value="$(arg sim_px4_dir)/build/px4_sitl_default/build_gazebo-classic:$(optenv GAZEBO_PLUGIN_PATH)"/>
+    <env name="LD_LIBRARY_PATH"
+         value="$(arg sim_px4_dir)/build/px4_sitl_default/build_gazebo-classic:$(optenv LD_LIBRARY_PATH)"/>
+    <node name="sitl" pkg="px4" type="px4" output="screen" args="$(arg sim_px4_dir)/build/px4_sitl_default/etc -s etc/init.d-posix/rcS $(arg px4_cmd_arg)" required="true"/>
 
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
       <arg name="gui" value="$(arg gui)"/>
-      <arg name="world_name" value="$(arg world)"/>
+      <arg name="world_name" value="$(arg sim_world)"/>
       <arg name="paused" value="false"/>
     </include>
 
-    <node name="vehicle_spawn" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sdf) -model $(arg vehicle) -x 0 -y 0 -z 0"/>
+    <node name="vehicle_spawn" pkg="gazebo_ros" type="spawn_model" output="screen" args="-sdf -file $(arg sim_sdf) -model $(arg vehicle) -x 0 -y 0 -z 0"/>
 
     <include file="$(find mavros)/launch/px4.launch">
       <arg name="fcu_url" value="$(arg fcu_url)"/>
