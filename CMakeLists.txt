@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   mavros_msgs
   message_generation
-  nav_msgs
   roscpp
   rospy
   sensor_msgs
@@ -16,7 +15,6 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_geometry_msgs
   tf2_ros
-  visualization_msgs
 )
 
 ## Generate messages
@@ -62,7 +60,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}_actions ${PROJECT_NAME}_controller_lib ${PROJECT_NAME}_velocity_pipeline
-  CATKIN_DEPENDS apriltag_ros geometry_msgs mavros_msgs message_runtime nav_msgs roscpp rospy sensor_msgs std_msgs tf2 tf2_geometry_msgs tf2_ros visualization_msgs
+  CATKIN_DEPENDS apriltag_ros geometry_msgs mavros_msgs message_runtime roscpp rospy sensor_msgs std_msgs tf2 tf2_geometry_msgs tf2_ros
 )
 
 ###########
@@ -148,10 +146,8 @@ target_link_libraries(${PROJECT_NAME}_target_estimator_node ${catkin_LIBRARIES})
 
 catkin_install_python(PROGRAMS
   scripts/gcs_bridge_node.py
-  scripts/image_topic_video_recorder.py
   scripts/logger_node.py
   scripts/target_detector_node.py
-  scripts/video_camera_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -177,8 +173,4 @@ install(DIRECTORY launch/
 
 install(DIRECTORY config/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
-)
-
-install(DIRECTORY rviz/
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz
 )

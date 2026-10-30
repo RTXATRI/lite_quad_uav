@@ -32,14 +32,6 @@ __pycache__/
 *.log
 *.tmp
 
-# Local video inputs, video exports and generated camera trajectories
-/docs/*.mp4
-/docs/*.m4v
-/docs/*.mov
-/docs/*.avi
-/docs/*.mkv
-/docs/*_camera_trajectory.csv
-
 # Editor and operating system files
 .vscode/
 .idea/

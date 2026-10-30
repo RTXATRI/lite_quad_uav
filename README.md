@@ -40,6 +40,15 @@ PX4/MAVROS -> reliable connected -> setpoint stream ready -> 任务请求 OFFBOA
 
 感知/辅助节点也不随 core launch 默认启动：AprilTag 检测和目标整理可用 `target_estimator_test.launch` 单独启动；`continuous_detection.launch` 保留为只启动 AprilTag 检测的入口。
 
+离线视频检测、相机轨迹反推、视频导出和图像话题录像已迁移至 `common/video_apriltag_test`。
+视频及历史输出由新包维护，使用说明见新包 README，启动入口为：
+
+```bash
+roslaunch video_apriltag_test apriltag_video_test.launch
+```
+
+该调试入口默认使用 `/apriltag_debug` 命名空间，可独立运行。
+
 ## 程序结构框图
 
 ```mermaid
