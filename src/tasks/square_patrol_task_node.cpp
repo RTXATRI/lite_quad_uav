@@ -6,6 +6,8 @@
  *   - start service:  /uav/tasks/square_patrol/start   (StartTask)
  *   - control service: /uav/tasks/square_patrol/control (ControlTask)
  *   - status topic:   /uav/tasks/square_patrol/status  (TaskStatus)
+ *
+ * 职责补充：在 MAVROS 本地坐标中生成方形航点，协调模式/解锁、起飞、巡航以及任务暂停、取消和恢复。
  */
 
 /* Includes / 头文件 ---------------------------------------------------------*/

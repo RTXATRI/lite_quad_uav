@@ -1,6 +1,8 @@
 /**
  * @file pid_position_controller.hpp
  * @brief 基础 PID 位置控制器：X/Y/Z/YAW 目标转换为速度候选量。
+ *
+ * 职责补充：声明单轴 PID 与位置控制器的配置、状态重置和控制计算接口，对应实现在同名 cpp 文件。
  */
 
 #pragma once

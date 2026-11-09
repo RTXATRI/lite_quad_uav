@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# 文件作用：目标检测业务的占位节点，当前仅发布最小辅助日志报告。
+# 实际 AprilTag 图像检测由 launch 启动 apriltag_ros，目标坐标整理由 target_estimator_node 完成。
 
 import rospy
 

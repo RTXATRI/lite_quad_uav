@@ -3,6 +3,8 @@
  * @brief PidAxis 与 PidPositionController 实现。
  *
  * 数学逻辑参考 src/3rd/pid.cpp：反馈量微分、条件积分 anti-windup、输出限幅。
+ *
+ * 职责补充：将任务位置/航向误差转换为水平、垂直和偏航速度候选量，同时给出收敛、误差及饱和状态。
  */
 
 #include <lite_quad_uav/controllers/pid_position_controller.hpp>

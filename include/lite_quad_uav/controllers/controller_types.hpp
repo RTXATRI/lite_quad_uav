@@ -1,6 +1,8 @@
 /**
  * @file controller_types.hpp
  * @brief 控制器库公共数据结构。
+ *
+ * 职责补充：定义不同控制算法共用的速度输出及反馈字段，使 PID 和混合控制结果能通过统一接口传递。
  */
 
 #pragma once

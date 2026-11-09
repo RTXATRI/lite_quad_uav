@@ -1,69 +1,127 @@
+<!--
+  文件作用：AprilTag 目标估计调试入口：启动标签检测和目标整理，将相机测量转换到机体及水平机体系并滤波跟踪。
+  依赖有效相机、车辆状态和 IMU 输入；输出感知结果，供跟踪或降落任务另行接入。
+-->
 <launch>
   <!-- AprilTag camera input -->
+  <!-- 检测节点的启动前缀；通常留空，需要调试时可填写调试器启动命令。 -->
   <arg name="launch_prefix" default=""/>
+  <!-- AprilTag 检测节点名称；与其他检测实例并行运行时应避免重名。 -->
   <arg name="apriltag_node_name" default="apriltag_ros_continuous_node"/>
+  <!-- 业务节点的日志去向：screen 为终端显示，log 为 ROS 日志文件。 -->
   <arg name="node_output" default="screen"/>
+  <!-- 相机话题前缀，后面拼接 image_topic 和 camera_info_topic。 -->
   <arg name="camera_name" default="/uav_1/usb_cam"/>
+  <!-- 相对 camera_name 的图像话题名，通常为 image_raw。 -->
   <arg name="image_topic" default="image_raw"/>
+  <!-- 相对 camera_name 的相机内参话题名，通常为 camera_info。 -->
   <arg name="camera_info_topic" default="camera_info"/>
+  <!-- 图像传输方式：raw 为原始图像，compressed 订阅相应的压缩传输话题。 -->
   <arg name="image_transport" default="raw"/>
+  <!-- 是否发布叠加检测结果的调试图像，便于观察识别情况。 -->
   <arg name="publish_tag_detections_image" default="true"/>
 
   <!-- AprilTag detector settings -->
+  <!-- AprilTag 编码家族，必须与实际标记一致，如 tag36h11。 -->
   <arg name="tag_family" default="tag36h11"/>
+  <!-- AprilTag 检测工作线程数；需结合 CPU 资源与相机帧率调整。 -->
   <arg name="tag_threads" default="2"/>
+  <!-- 检测图像降采样倍数；增大可减少计算量，但小标签和远距离识别能力会下降。 -->
   <arg name="tag_decimate" default="1.0"/>
+  <!-- 检测预处理的高斯模糊参数 sigma，单位像素；0 表示不额外模糊。 -->
   <arg name="tag_blur" default="0.0"/>
+  <!-- 是否细化标签边缘，1 为启用，用于改善角点及位姿估计。 -->
   <arg name="tag_refine_edges" default="1"/>
+  <!-- AprilTag 内部调试开关，0 为关闭；启用后可能增加调试输出开销。 -->
   <arg name="tag_debug" default="0"/>
+  <!-- 允许的最大编码纠错距离；增大可放宽检测条件，同时增加误识别可能。 -->
   <arg name="max_hamming_dist" default="2"/>
+  <!-- 是否由检测器发布识别到的标签 TF。 -->
   <arg name="publish_tf" default="true"/>
+  <!-- 是否剔除同一帧中 ID 重复的标签检测结果。 -->
   <arg name="remove_duplicates" default="true"/>
+  <!-- 目标标签 ID，须与贴图编码一致。 -->
   <arg name="tag_id" default="3"/>
+  <!-- 标签黑色外边的实际边长，单位 m；地面默认 0.20，船顶标签应设为 0.40。 -->
   <arg name="tag_size" default="0.20"/>
 
   <!-- Target estimator inputs -->
+  <!-- 目标估计器订阅的 AprilTag 检测结果话题，需与检测节点实际输出一致。 -->
   <arg name="tag_detection_topic" default="/tag_detections"/>
+  <!-- 连接管理器发布的车辆状态话题，用于判断估计器是否具备可靠车辆连接。 -->
   <arg name="vehicle_status_topic" default="/uav/vehicle/status"/>
+  <!-- 姿态补偿使用的 IMU 话题；更换 MAVROS 命名空间时应同步修改。 -->
   <arg name="imu_topic" default="/mavros/imu/data"/>
 
   <!-- Target estimator frames and camera extrinsic -->
+  <!-- 检测位姿所属的相机坐标系名称；使用 TF 外参时需能变换到 body_frame。 -->
   <arg name="camera_frame" default="robot_camera_link"/>
+  <!-- 无人机机体坐标系名称，作为相机测量转换后的参考系。 -->
   <arg name="body_frame" default="base_link"/>
+  <!-- 消除机体 roll/pitch 后的水平机体系名称，用于表达目标相对状态。 -->
   <arg name="level_frame" default="level_body"/>
+  <!-- 相机外参来源：true 查询 TF，false 使用下面的手动平移和 RPY 参数。 -->
   <arg name="use_tf_extrinsic" default="false"/>
   <!-- Legacy manual extrinsic defaults; the simulation model is now maintained in
        ocean_simulation_gazebo/models/vehicle/lite_quad_uav. These values have not
        been recalibrated; confirm Gazebo/ROS optical frame conventions before use. -->
+  <!-- 手动平移 X，单位 m；下列外参为尚未重新标定的历史默认值，使用前核对相机光学与机体坐标约定。 -->
   <arg name="camera_translation_x" default="-0.158979"/>
+  <!-- 相机在机体系中的外参平移 Y，单位 m；仅手动外参模式生效。 -->
   <arg name="camera_translation_y" default="-0.04405"/>
+  <!-- 相机在机体系中的外参平移 Z，单位 m；仅手动外参模式生效。 -->
   <arg name="camera_translation_z" default="0.045074"/>
+  <!-- 相机到机体系的外参横滚角，单位 rad；仅手动外参模式生效。 -->
   <arg name="camera_roll" default="0.0"/>
+  <!-- 相机到机体系的外参俯仰角，单位 rad；仅手动外参模式生效。 -->
   <arg name="camera_pitch" default="1.57079632679"/>
+  <!-- 相机到机体系的外参偏航角，单位 rad；仅手动外参模式生效。 -->
   <arg name="camera_yaw" default="0.0"/>
 
   <!-- Target estimator timing and tracking -->
+  <!-- 业务节点健康/就绪检查频率，单位 Hz；不等同于 MAVROS 速度发布频率。 -->
   <arg name="runtime_check_rate" default="20.0"/>
+  <!-- 目标滤波、预测与发布循环频率，单位 Hz；实际检测更新还受相机帧率影响。 -->
   <arg name="estimator_update_rate" default="30.0"/>
+  <!-- 各业务节点发布结构化日志报告的频率，单位 Hz；与控制更新频率分别设置。 -->
   <arg name="log_report_rate" default="1.0"/>
+  <!-- 车辆状态允许的最大数据年龄，单位 s；过期时相应节点进入等待或恢复流程。 -->
   <arg name="vehicle_status_timeout" default="2.0"/>
+  <!-- 标签检测输入过期阈值，单位 s。 -->
   <arg name="tag_detection_timeout" default="0.5"/>
+  <!-- IMU 输入过期阈值，单位 s；过期时按下面的系数降低姿态补偿置信度。 -->
   <arg name="imu_timeout" default="0.1"/>
+  <!-- 可接受的目标测量距离下限，单位 m；过近测量会被拒绝。 -->
   <arg name="min_valid_distance" default="0.15"/>
+  <!-- 可接受的目标测量距离上限，单位 m；过远测量会被拒绝。 -->
   <arg name="max_valid_distance" default="10.0"/>
+  <!-- 单次目标位置测量允许的最大跳变，单位 m；用于剔除异常观测。 -->
   <arg name="max_position_jump" default="1.0"/>
+  <!-- alpha-beta 滤波的位置校正增益，范围 0 到 1；越大响应越快，也越容易受测量噪声影响。 -->
   <arg name="alpha" default="0.45"/>
+  <!-- alpha-beta 滤波的速度校正增益，非负；增大可加快速度估计响应。 -->
   <arg name="beta" default="0.08"/>
+  <!-- 最小滤波更新间隔，单位 s；两次观测间隔过短时跳过本次更新。 -->
   <arg name="min_filter_dt" default="0.005"/>
+  <!-- 最大滤波时间步长，单位 s；超出后按该上限计算更新。 -->
   <arg name="max_filter_dt" default="0.20"/>
+  <!-- 连续稳定检测达到该帧数后，目标由捕获阶段进入 TRACKING。 -->
   <arg name="stable_frame_threshold" default="3"/>
+  <!-- 连续丢失帧数的上限；超过后目标进入 LOST。 -->
   <arg name="lost_frame_threshold" default="5"/>
+  <!-- 检测丢失后允许继续预测的最长时间，单位 s；超出后进入 LOST。 -->
   <arg name="max_predict_time" default="0.30"/>
+  <!-- 失去有效检测后目标记录的保留时长，单位 s；用于清理过期轨迹。 -->
   <arg name="track_retention_time" default="1.0"/>
+  <!-- 目标位姿有效的最低置信度，范围 0 到 1。 -->
   <arg name="confidence_threshold" default="0.5"/>
+  <!-- 丢失后的置信度衰减时间常数，单位 s；越小，丢失后置信度下降越快。 -->
   <arg name="tau_lost" default="0.2"/>
+  <!-- 检测延迟对应的置信度衰减时间常数，单位 s；越小，对延迟越敏感。 -->
   <arg name="tau_detection" default="0.15"/>
+  <!-- 测量残差的置信度衰减尺度，单位 m；越小，对估计残差越敏感。 -->
   <arg name="residual_scale" default="0.5"/>
+  <!-- IMU 过期时施加的置信度乘数，范围 0 到 1；越小降级越明显。 -->
   <arg name="imu_stale_confidence_scale" default="0.35"/>
 
   <node pkg="apriltag_ros"
@@ -86,9 +144,11 @@
     <param name="max_hamming_dist" type="int" value="$(arg max_hamming_dist)"/>
     <param name="publish_tf" type="bool" value="$(arg publish_tf)"/>
     <param name="remove_duplicates" type="bool" value="$(arg remove_duplicates)"/>
+    <!-- 参与检测的独立标签及物理尺寸；size 使用黑色外边长，单位 m。 -->
     <rosparam param="standalone_tags" subst_value="true">
       [{id: $(arg tag_id), size: $(arg tag_size)}]
     </rosparam>
+    <!-- 标签组合体配置；空列表表示只使用上面的独立标签。 -->
     <rosparam param="tag_bundles">[]</rosparam>
   </node>
 

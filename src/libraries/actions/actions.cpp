@@ -3,6 +3,8 @@
  * @brief Action 动作实现：Takeoff / Waypoint / Hold / TrackTarget / Landing。
  *
  * 每种 Action 实现状态机模式，onEnter 初始化 → onUpdate 每周期计算 → onExit 清理 / onCancel 取消。
+ *
+ * 职责补充：供任务层组合起飞、航点、保持、目标跟踪和降落动作，统一生成 ControlRequest 与动作执行结果。
  */
 
 #include <lite_quad_uav/tasks/actions.hpp>

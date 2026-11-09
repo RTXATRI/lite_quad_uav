@@ -4,6 +4,8 @@
  *
  * 处理链顺序为 applyWatchdog → applySafetyFilter → applyLimits，
  * 任何环节异常均降级为 SAFE_HOLD 零速度输出。
+ *
+ * 职责补充：作为速度管理器的处理库，统一执行候选命令有效性、数据超时、安全等级和运动限幅规则。
  */
 
 #include <lite_quad_uav/velocity/velocity_pipeline.hpp>

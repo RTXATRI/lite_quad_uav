@@ -3,6 +3,8 @@
  * @brief 速度管道：Watchdog + 安全过滤 + 速度限幅处理链。
  *
  * 管道输出最终由 velocity_manager_node 发布到 MAVROS，确保任何输入异常都降级为零速度安全保持。
+ *
+ * 职责补充：声明最终速度处理的配置、命令缓存、安全状态与输出接口，由 velocity_manager_node 调用。
  */
 
 #pragma once

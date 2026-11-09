@@ -4,6 +4,8 @@
  *
  * 动作实现状态机模式 (onEnter/onUpdate/onExit/onCancel)，由 Task 层调度。
  * onUpdate 每周期返回 ActionOutput（含 ControlRequest），驱动 Controller 层执行。
+ *
+ * 职责补充：定义任务层与动作层交换的状态、配置和结果，使不同任务能复用同一套动作生命周期接口。
  */
 
 #pragma once

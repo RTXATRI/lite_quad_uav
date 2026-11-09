@@ -1,13 +1,25 @@
+<!--
+  文件作用：AprilTag 连续检测入口：订阅指定相机图像和内参，按 settings.yaml、tags.yaml 配置输出检测结果。
+  适合独立检查标签识别和调试图像；需要目标坐标整理与跟踪时使用 target_estimator_test.launch。
+-->
 <launch>
+  <!-- 检测节点的启动前缀；通常留空，需要调试时可填写调试器启动命令。 -->
   <arg name="launch_prefix" default="" /> <!-- set to value="gdbserver localhost:10000" for remote debugging -->
+  <!-- AprilTag 检测节点名称及参数命名空间，用于隔离不同相机的检测配置。 -->
   <arg name="node_namespace" default="apriltag_ros_continuous_node" />
+  <!-- 相机话题前缀，后面拼接 image_topic 和 camera_info_topic。 -->
   <arg name="camera_name" default="/uav_1/usb_cam" />
+  <!-- 相对 camera_name 的图像话题名，通常为 image_raw。 -->
   <arg name="image_topic" default="image_raw" />
+  <!-- 相对 camera_name 的相机内参话题名，通常为 camera_info。 -->
   <arg name="camera_info_topic" default="camera_info" />
+  <!-- 图像传输方式：raw 为原始图像，compressed 订阅相应的压缩传输话题。 -->
   <arg name="image_transport" default="raw" />
 
   <!-- Set parameters -->
+  <!-- 加载 AprilTag 家族、检测器和显示配置。 -->
   <rosparam command="load" file="$(find lite_quad_uav)/config/settings.yaml" ns="$(arg node_namespace)" />
+  <!-- 加载 AprilTag 的 ID、实际边长及组合体配置；更换标签时同步检查该文件。 -->
   <rosparam command="load" file="$(find lite_quad_uav)/config/tags.yaml" ns="$(arg node_namespace)" />
   
   <node pkg="apriltag_ros" type="apriltag_ros_continuous_node" name="$(arg node_namespace)" clear_params="true" output="screen" launch-prefix="$(arg launch_prefix)" >
@@ -21,6 +33,7 @@
     <remap from="camera_info" to="$(arg camera_name)/$(arg camera_info_topic)" />
 
     <param name="transport_hint" type="str" value="$(arg image_transport)" />
+    <!-- 是否发布叠加检测结果的调试图像，便于观察识别情况。 -->
     <param name="publish_tag_detections_image" type="bool" value="true" />      <!-- default: false -->
   </node>
 </launch>

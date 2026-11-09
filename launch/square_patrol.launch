@@ -1,48 +1,90 @@
+<!--
+  文件作用：无人机方形巡航入口：加载控制核心、方形巡航任务和两个占位任务节点。
+  默认接入外部仿真与 MAVROS；启动任务后由任务流程请求 OFFBOARD、解锁、起飞并巡航。
+-->
 <launch>
   <!-- Task parameters -->
+  <!-- 方形航线边长，单位 m；以任务生成航点时的水平位置为起点，沿本地 X/Y 轴展开。 -->
   <arg name="square_side_length" default="10.0"/>
+  <!-- 巡航航点的 MAVROS 本地 ENU 目标 Z，单位 m；是本地坐标值，不是离地增量。 -->
   <arg name="flight_altitude" default="3.0"/>
+  <!-- 起飞动作的 MAVROS 本地 ENU 目标 Z，单位 m；保持与巡航高度的衔接。 -->
   <arg name="takeoff_height" default="3.0"/>
+  <!-- 判定到达航点的三维距离阈值，单位 m；越小，对定位及控制收敛要求越高。 -->
   <arg name="waypoint_accept_radius" default="0.4"/>
+  <!-- 到达航点后保持的时长，单位 s；0 表示不额外等待。 -->
   <arg name="waypoint_hold_time" default="0.0"/>
+  <!-- 水平速度模长上限，单位 m/s；与控制器和最终速度管道的限幅配置共同作用。 -->
   <arg name="max_xy_speed" default="10.0"/>
+  <!-- 最大上升速度，填写非负值，单位 m/s。 -->
   <arg name="max_z_up_speed" default="0.6"/>
+  <!-- 最大下降速度的大小，填写非负值，单位 m/s；实际下降速度方向由控制器处理。 -->
   <arg name="max_z_down_speed" default="0.6"/>
+  <!-- 偏航角速度绝对值上限，单位 rad/s；设为 0 会将最终偏航角速度限制为 0。 -->
   <arg name="max_yaw_rate" default="0.0"/>
+  <!-- 是否由巡航任务节点自动尝试启动；false 时通过任务管理服务显式启动。 -->
   <arg name="auto_start_task" default="false"/>
+  <!-- 方形任务与动作更新频率，单位 Hz；最终速度流由速度管理器独立发布。 -->
   <arg name="task_update_rate" default="20.0"/>
+  <!-- 业务节点健康/就绪检查频率，单位 Hz；不等同于 MAVROS 速度发布频率。 -->
   <arg name="runtime_check_rate" default="20.0"/>
+  <!-- MAVROS 本地位置允许的最大数据年龄，单位 s，用于位置输入有效性检查。 -->
   <arg name="local_position_timeout" default="2.0"/>
+  <!-- 车辆状态允许的最大数据年龄，单位 s；过期时相应节点进入等待或恢复流程。 -->
   <arg name="vehicle_status_timeout" default="2.0"/>
+  <!-- 任务管理器运行状态检查频率，单位 Hz。 -->
   <arg name="task_manager_runtime_check_rate" default="20.0"/>
+  <!-- 请求切换飞行模式后，等待飞控状态确认的最长时间，单位 s。 -->
   <arg name="mode_confirm_timeout" default="10.0"/>
+  <!-- 请求解锁后，等待飞控 armed 状态确认的最长时间，单位 s。 -->
   <arg name="arm_confirm_timeout" default="10.0"/>
+  <!-- 本包节点访问的 MAVROS 前缀，须与实际部署一致，如 /mavros 或 /uav_1/mavros。 -->
   <arg name="mavros_ns" default="/mavros"/>
+  <!-- 是否启动集中日志节点，统一汇总各节点的 LogReport。 -->
   <arg name="start_logger" default="true"/>
+  <!-- 是否由控制核心启动 MAVROS；已有仿真入口启动 MAVROS 时设为 false，避免重复实例。 -->
   <arg name="start_mavros" default="false"/>
+  <!-- 业务节点的日志去向：screen 为终端显示，log 为 ROS 日志文件。 -->
   <arg name="node_output" default="log"/>
+  <!-- 集中日志节点的输出位置：screen 为终端，log 为 ROS 日志文件。 -->
   <arg name="logger_output" default="screen"/>
+  <!-- 各业务节点发布结构化日志报告的频率，单位 Hz；与控制更新频率分别设置。 -->
   <arg name="log_report_rate" default="1.0"/>
+  <!-- 集中日志刷新/打印频率，单位 Hz；增大可提高观察频率，也会增加终端输出。 -->
   <arg name="logger_print_rate" default="1.0"/>
+  <!-- 日志报告判定为过期的时间，单位 s；仅影响日志状态显示。 -->
   <arg name="logger_report_timeout" default="3.0"/>
+  <!-- 是否显示辅助节点报告，如地面站桥接和目标检测占位节点。 -->
   <arg name="logger_show_aux" default="false"/>
+  <!-- 是否显示当前未执行的任务节点报告。 -->
   <arg name="logger_show_inactive_tasks" default="false"/>
+  <!-- 集中日志中说明消息的截断长度，单位为字符。 -->
   <arg name="logger_max_message_len" default="48"/>
+  <!-- 是否使用紧凑的集中日志显示格式。 -->
   <arg name="logger_compact" default="false"/>
 
   <!-- Default flow: start simulation externally with ocean_simulation_gazebo.
        Empty legacy path arguments are resolved only when start_sim is enabled. -->
+  <!-- 是否启用此文件内的 PX4/Gazebo/MAVROS 仿真分支；外部已启动协同场景时保持 false。 -->
   <arg name="start_sim" default="false"/>
+  <!-- 可选 PX4 源码根目录；start_sim=true 时使用，空值通过 ROS 查找 px4 包。 -->
   <arg name="px4_dir" default="$(optenv PX4_DIR)"/>
+  <!-- PX4 仿真机型名，通常为 iris；须与加载的无人机模型及飞控配置匹配。 -->
   <arg name="vehicle" default="iris"/>
+  <!-- 可选仿真世界路径；仅 start_sim=true 时使用，空值选择 PX4 默认 empty.world。 -->
   <arg name="world" default=""/>
+  <!-- 可选无人机 SDF 路径；start_sim=true 且留空时按 vehicle 选择 PX4 自带模型。 -->
   <arg name="sdf" default=""/>
+  <!-- 是否打开 Gazebo 客户端窗口；false 时仿真服务和传感器仍可运行。 -->
   <arg name="gui" default="true"/>
+  <!-- MAVROS 与飞控的通信地址；端口必须与实际 PX4 实例配置匹配。 -->
   <arg name="fcu_url" default="udp://:14540@localhost:14557"/>
+  <!-- 是否保留 PX4 交互控制台；false 使用后台模式，适合由 launch 统一管理。 -->
   <arg name="interactive" default="true"/>
 
   <!-- ========== Optional PX4 SITL + Gazebo + MAVROS ========== -->
   <group if="$(arg start_sim)">
+    <!-- 以下为 start_sim 分支内部推导的路径；日常调整使用上方 px4_dir/world/sdf 参数。 -->
     <arg name="sim_px4_dir" value="$(eval arg('px4_dir') or find('px4'))"/>
     <arg name="sim_world" value="$(eval arg('world') or arg('sim_px4_dir') + '/Tools/simulation/gazebo-classic/sitl_gazebo-classic/worlds/empty.world')"/>
     <arg name="sim_sdf" value="$(eval arg('sdf') or arg('sim_px4_dir') + '/Tools/simulation/gazebo-classic/sitl_gazebo-classic/models/' + arg('vehicle') + '/' + arg('vehicle') + '.sdf')"/>
@@ -120,26 +162,36 @@
   </node>
 
   <node pkg="lite_quad_uav" type="hover_placeholder_task_node" name="hover_placeholder_task" output="$(arg node_output)">
+    <!-- 占位任务注册标识，须与任务管理器登记的任务 ID 一致。 -->
     <param name="task_id" value="hover_placeholder"/>
+    <!-- 占位任务服务及状态话题前缀，须与任务管理器注册的命名空间一致。 -->
     <param name="task_ns" value="/uav/tasks/hover_placeholder"/>
     <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
     <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
     <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <!-- 任务或管理器状态发布频率，单位 Hz。 -->
     <param name="status_publish_rate" value="2.0"/>
     <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <!-- 占位任务进入运行后等待多久自动完成，单位 s；0 表示不额外等待。 -->
     <param name="finish_delay" value="0.0"/>
+    <!-- 是否自动尝试启动该任务；false 时等待任务服务请求。 -->
     <param name="auto_start" value="false"/>
   </node>
 
   <node pkg="lite_quad_uav" type="inspection_placeholder_task_node" name="inspection_placeholder_task" output="$(arg node_output)">
+    <!-- 占位任务注册标识，须与任务管理器登记的任务 ID 一致。 -->
     <param name="task_id" value="inspection_placeholder"/>
+    <!-- 占位任务服务及状态话题前缀，须与任务管理器注册的命名空间一致。 -->
     <param name="task_ns" value="/uav/tasks/inspection_placeholder"/>
     <param name="runtime_check_rate" value="$(arg runtime_check_rate)"/>
     <param name="vehicle_status_timeout" value="$(arg vehicle_status_timeout)"/>
     <param name="local_position_timeout" value="$(arg local_position_timeout)"/>
+    <!-- 任务或管理器状态发布频率，单位 Hz。 -->
     <param name="status_publish_rate" value="2.0"/>
     <param name="log_report_rate" value="$(arg log_report_rate)"/>
+    <!-- 占位任务进入运行后等待多久自动完成，单位 s；0 表示不额外等待。 -->
     <param name="finish_delay" value="0.0"/>
+    <!-- 是否自动尝试启动该任务；false 时等待任务服务请求。 -->
     <param name="auto_start" value="false"/>
   </node>
 

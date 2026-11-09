@@ -1,6 +1,8 @@
 /**
  * @file controller_command.hpp
  * @brief 控制器内部命令结构，由 ControlRequest 转换得到，不作为 ROS 消息发布。
+ *
+ * 职责补充：统一控制模式、混合模式、目标参考和限幅字段，连接 ROS 任务请求与内部控制算法接口。
  */
 
 #pragma once

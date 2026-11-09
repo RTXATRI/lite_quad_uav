@@ -4,6 +4,8 @@
  *
  * @note RLTrackingInterface 与 RLLandingInterface 实现完全相同，
  *       后续可考虑模板化或合并为单一类以消除代码重复。
+ *
+ * 职责补充：接收并检查外部策略给出的速度命令，向控制器调度层提供有效缓存；策略推理由外部模块完成。
  */
 
 #include <lite_quad_uav/controllers/rl_interfaces.hpp>
